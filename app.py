@@ -107,6 +107,23 @@ def book():
     db.session.commit()
 
     return render_template("success.html", name=name, car=assigned_car["plate"], days=days)
+from flask import Response
+
+# Simple password for admin (change this later!)
+ADMIN_PASSWORD = "grumpy123"
+
+@app.route("/dashboard", methods=["GET", "POST"])
+def dashboard():
+    # Ask for password
+    password = request.args.get("password")
+
+    if password != ADMIN_PASSWORD:
+        return Response("Access denied. Add ?password=grumpy123 to the URL.", 401)
+
+    # Get all bookings from database
+    bookings = Booking.query.all()
+
+    return render_template("dashboard.html", bookings=bookings)
 
 if __name__ == "__main__":
     with app.app_context():
