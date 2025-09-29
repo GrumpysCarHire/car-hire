@@ -1,157 +1,114 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-from openpyxl import Workbook, load_workbook
-from filelock import FileLock
+from flask import Flask, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-import os
-import uuid
 
 app = Flask(__name__)
-app.secret_key = 'dev-secret-change-me'  # change this for production use
 
-BOOKING_FILE = 'bookings.xlsx'
-LOCK_FILE = BOOKING_FILE + '.lock'
+# Database configuration (SQLite file called bookings.db)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookings.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-# Car database
-CARS = {
-    '101': {'type': 'S-Presso', 'plate': 'N140-374W'},
-    '102': {'type': 'S-Presso', 'plate': 'N161-304W'},
-    '103': {'type': 'S-Presso', 'plate': 'N150-785W'},
-    '104': {'type': 'S-Presso', 'plate': 'N131-797W'},
-    '105': {'type': 'S-Presso', 'plate': 'N160-343W'},
-    '201': {'type': 'Volvo',    'plate': 'Ann 8'},
+# Define database model
+class Booking(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    surname = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(50), nullable=False)
+    address = db.Column(db.String(200), nullable=False)
+    pobox = db.Column(db.String(50), nullable=True)
+    occupation = db.Column(db.String(100), nullable=True)
+    workplace = db.Column(db.String(100), nullable=True)
+    additional_driver = db.Column(db.String(100), nullable=True)
+    car_type = db.Column(db.String(50), nullable=False)
+    license_plate = db.Column(db.String(50), nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    days = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f"<Booking {self.name} {self.surname}>"
+
+# Car availability
+cars = {
+    "S-Presso": [
+        {"id": 101, "plate": "N140-374W"},
+        {"id": 102, "plate": "N161-304W"},
+        {"id": 103, "plate": "N150-785W"},
+        {"id": 104, "plate": "N131-797W"},
+        {"id": 105, "plate": "N160-343W"},
+    ],
+    "Volvo": [
+        {"id": 201, "plate": "Ann 8"},
+    ]
 }
 
-# Excel headers
-HEADERS = [
-    'BookingID', 'Timestamp', 'Name', 'Surname', 'Email', 'Phone',
-    'Address', 'PO Box', 'Occupation', 'PlaceOfWork', 'AdditionalDriver',
-    'StartDate', 'EndDate', 'Days', 'CarType', 'CarID', 'LicensePlate'
-]
+def assign_car(car_type, start_date, end_date):
+    # Get all bookings for this car type
+    booked = Booking.query.filter_by(car_type=car_type).all()
 
-# Ensure Excel file exists
-def init_excel():
-    if not os.path.exists(BOOKING_FILE):
-        wb = Workbook()
-        ws = wb.active
-        ws.title = 'Bookings'
-        ws.append(HEADERS)
-        wb.save(BOOKING_FILE)
+    for car in cars[car_type]:
+        # Check if this car is free
+        available = True
+        for b in booked:
+            if b.license_plate == car["plate"]:
+                if not (end_date < b.start_date or start_date > b.end_date):
+                    available = False
+                    break
+        if available:
+            return car
+    return None  # No cars available
 
-# Read bookings into list of dicts
-def read_bookings():
-    if not os.path.exists(BOOKING_FILE):
-        return []
-    wb = load_workbook(BOOKING_FILE)
-    ws = wb['Bookings']
-    bookings = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        if row[0] is None:
-            continue
-        b = dict(zip(HEADERS, row))
-        sd = b['StartDate']
-        ed = b['EndDate']
-        if isinstance(sd, datetime):
-            b['StartDate'] = sd.date()
-        if isinstance(ed, datetime):
-            b['EndDate'] = ed.date()
-        bookings.append(b)
-    return bookings
-
-# Date overlap check (inclusive)
-def dates_overlap(a_start, a_end, b_start, b_end):
-    return not (a_end < b_start or a_start > b_end)
-
-# Find first available car of requested type
-def find_available_car(car_type, start_date, end_date, bookings):
-    for car_id, info in CARS.items():
-        if info['type'] != car_type:
-            continue
-        busy = False
-        for b in bookings:
-            if str(b.get('CarID')) != str(car_id):
-                continue
-            b_start = b['StartDate']
-            b_end = b['EndDate']
-            if dates_overlap(start_date, end_date, b_start, b_end):
-                busy = True
-                break
-        if not busy:
-            return car_id, info['plate']
-    return None, None
-
-# Save booking to Excel safely
-def save_booking(booking_row):
-    lock = FileLock(LOCK_FILE, timeout=10)
-    with lock:
-        init_excel()
-        wb = load_workbook(BOOKING_FILE)
-        ws = wb['Bookings']
-        ws.append(booking_row)
-        wb.save(BOOKING_FILE)
-
-# Main route: form and submission
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/")
 def index():
-    if request.method == 'POST':
-        # Get form data
-        name = request.form.get('name', '').strip()
-        surname = request.form.get('surname', '').strip()
-        email = request.form.get('email', '').strip()
-        phone = request.form.get('phone', '').strip()
-        address = request.form.get('address', '').strip()
-        pobox = request.form.get('pobox', '').strip()
-        occupation = request.form.get('occupation', '').strip()
-        placeofwork = request.form.get('placeofwork', '').strip()
-        add_driver = request.form.get('additional_driver', '').strip()
-        start_str = request.form.get('start_date', '').strip()
-        end_str = request.form.get('end_date', '').strip()
-        car_type = request.form.get('car_type', '').strip()
+    return render_template("index.html")
 
-        # Validate fields
-        if not (name and surname and email and start_str and end_str and car_type):
-            flash('Please fill in all required fields.')
-            return redirect(url_for('index'))
+@app.route("/book", methods=["POST"])
+def book():
+    # Collect form data
+    name = request.form["name"]
+    surname = request.form["surname"]
+    email = request.form["email"]
+    phone = request.form["phone"]
+    address = request.form["address"]
+    pobox = request.form["pobox"]
+    occupation = request.form["occupation"]
+    workplace = request.form["workplace"]
+    additional_driver = request.form["additional_driver"]
+    car_type = request.form["car_type"]
+    start_date = datetime.strptime(request.form["start_date"], "%Y-%m-%d").date()
+    end_date = datetime.strptime(request.form["end_date"], "%Y-%m-%d").date()
+    days = (end_date - start_date).days + 1
 
-        try:
-            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_str, '%Y-%m-%d').date()
-        except ValueError:
-            flash('Invalid date format.')
-            return redirect(url_for('index'))
+    # Assign car
+    assigned_car = assign_car(car_type, start_date, end_date)
+    if not assigned_car:
+        return "No available cars of this type for the selected dates."
 
-        if end_date < start_date:
-            flash('End date cannot be before start date.')
-            return redirect(url_for('index'))
+    # Save booking to database
+    booking = Booking(
+        name=name,
+        surname=surname,
+        email=email,
+        phone=phone,
+        address=address,
+        pobox=pobox,
+        occupation=occupation,
+        workplace=workplace,
+        additional_driver=additional_driver,
+        car_type=car_type,
+        license_plate=assigned_car["plate"],
+        start_date=start_date,
+        end_date=end_date,
+        days=days
+    )
+    db.session.add(booking)
+    db.session.commit()
 
-        bookings = read_bookings()
-        car_id, plate = find_available_car(car_type, start_date, end_date, bookings)
-        if not car_id:
-            flash(f'Sorry — no {car_type} is available for those dates.')
-            return redirect(url_for('index'))
+    return render_template("success.html", name=name, car=assigned_car["plate"], days=days)
 
-        days = (end_date - start_date).days + 1
-        booking_id = uuid.uuid4().hex[:10]
-        timestamp = datetime.now().isoformat()
-
-        row = [
-            booking_id, timestamp, name, surname, email, phone,
-            address, pobox, occupation, placeofwork, add_driver,
-            start_date, end_date, days, car_type, car_id, plate
-        ]
-        save_booking(row)
-
-        booking = dict(zip(HEADERS, row))
-        return render_template('success.html', booking=booking)
-
-    return render_template('index.html')
-
-# View all bookings
-@app.route('/bookings')
-def show_bookings():
-    bookings = read_bookings()
-    bookings_sorted = sorted(bookings, key=lambda b: b['StartDate'])
-    return render_template('bookings.html', bookings=bookings_sorted)
-
-if __name__ == '__main__':
-    init_excel()
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()  # Create tables if not exist
     app.run(debug=True)
