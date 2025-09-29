@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booking Success</title>
+</head>
+<body>
+    <h1>Booking Confirmed</h1>
+    <p>Thank you, {{ booking.Name }} {{ booking.Surname }}!</p>
+    <p>Your booking ID is <b>{{ booking.BookingID }}</b>.</p>
+    <p>Car: {{ booking.CarType }} (ID {{ booking.CarID }}, Plate {{ booking.LicensePlate }})</p>
+    <p>Dates: {{ booking.StartDate }} to {{ booking.EndDate }} ({{ booking.Days }} days)</p>
+    <p><a href="/">Make another booking</a></p>
+    <p><a href="/bookings">View all bookings</a></p>
+</body>
+</html>

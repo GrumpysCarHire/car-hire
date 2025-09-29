@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Bookings</title>
+</head>
+<body>
+    <h1>All Bookings</h1>
+
+    {% if bookings %}
+    <table border="1">
+        <tr>
+            {% for h in bookings[0].keys() %}
+              <th>{{ h }}</th>
+            {% endfor %}
+        </tr>
+        {% for b in bookings %}
+        <tr>
+            {% for v in b.values() %}
+              <td>{{ v }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+      <p>No bookings yet.</p>
+    {% endif %}
+
+    <p><a href="/">Back to booking form</a></p>
+</body>
+</html>

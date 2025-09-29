@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Car Hire Booking</title>
+</head>
+<body>
+    <h1>Car Hire Booking Form</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul style="color:red;">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="post">
+        <label>Name*: <input name="name" required></label><br>
+        <label>Surname*: <input name="surname" required></label><br>
+        <label>Email*: <input type="email" name="email" required></label><br>
+        <label>Phone: <input name="phone"></label><br>
+        <label>Address: <input name="address"></label><br>
+        <label>P.O. Box: <input name="pobox"></label><br>
+        <label>Occupation: <input name="occupation"></label><br>
+        <label>Place of work: <input name="placeofwork"></label><br>
+        <label>Additional driver: <input name="additional_driver"></label><br>
+        <label>Start date*: <input type="date" name="start_date" required></label><br>
+        <label>End date*: <input type="date" name="end_date" required></label><br>
+        <label>Car type*:
+            <select name="car_type" required>
+                <option value="S-Presso">S-Presso</option>
+                <option value="Volvo">Volvo</option>
+            </select>
+        </label><br>
+        <button type="submit">Submit Booking</button>
+    </form>
+</body>
+</html>
