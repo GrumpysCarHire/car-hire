@@ -1,42 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bookings Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #f4f4f4; }
-        h1 { color: #333; }
-    </style>
+    <title>Admin Dashboard - Grumpy's Car Hire</title>
 </head>
 <body>
-    <h1>Bookings Dashboard</h1>
-    <table>
+    <h1>All Bookings</h1>
+    <table border="1" cellpadding="5">
         <tr>
             <th>ID</th>
             <th>Name</th>
             <th>Surname</th>
             <th>Email</th>
             <th>Phone</th>
+            <th>Address</th>
+            <th>P.O. Box</th>
+            <th>Occupation</th>
+            <th>Workplace</th>
+            <th>Additional Driver</th>
             <th>Car Type</th>
             <th>License Plate</th>
             <th>Start Date</th>
             <th>End Date</th>
             <th>Days</th>
         </tr>
-        {% for b in bookings %}
+        {% for booking in bookings %}
         <tr>
-            <td>{{ b.id }}</td>
-            <td>{{ b.name }}</td>
-            <td>{{ b.surname }}</td>
-            <td>{{ b.email }}</td>
-            <td>{{ b.phone }}</td>
-            <td>{{ b.car_type }}</td>
-            <td>{{ b.license_plate }}</td>
-            <td>{{ b.start_date }}</td>
-            <td>{{ b.end_date }}</td>
-            <td>{{ b.days }}</td>
+            <td>{{ booking.id }}</td>
+            <td>{{ booking.name }}</td>
+            <td>{{ booking.surname }}</td>
+            <td>{{ booking.email }}</td>
+            <td>{{ booking.phone }}</td>
+            <td>{{ booking.address }}</td>
+            <td>{{ booking.pobox }}</td>
+            <td>{{ booking.occupation }}</td>
+            <td>{{ booking.workplace }}</td>
+            <td>{{ booking.additional_driver }}</td>
+            <td>{{ booking.car_type }}</td>
+            <td>{{ booking.license_plate }}</td>
+            <td>{{ booking.start_date }}</td>
+            <td>{{ booking.end_date }}</td>
+            <td>{{ booking.days }}</td>
         </tr>
         {% endfor %}
     </table>

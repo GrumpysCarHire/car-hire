@@ -2,69 +2,61 @@
 <html>
 <head>
     <title>Grumpy's Car Hire</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        form { max-width: 600px; margin: auto; }
-        label { display: block; margin-top: 10px; }
-        input, select { width: 100%; padding: 8px; margin-top: 5px; }
-        button { margin-top: 15px; padding: 10px; width: 100%; }
-        .flash { color: red; margin: 10px 0; }
-    </style>
 </head>
 <body>
     <h1>Book Your Car</h1>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <ul class="flash">
+        <ul>
           {% for message in messages %}
-            <li>{{ message }}</li>
+            <li style="color: green;">{{ message }}</li>
           {% endfor %}
         </ul>
       {% endif %}
     {% endwith %}
 
     <form method="POST">
-        <label>Name</label>
-        <input type="text" name="name" required>
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br>
 
-        <label>Surname</label>
-        <input type="text" name="surname" required>
+        <label>Surname:</label><br>
+        <input type="text" name="surname" required><br>
 
-        <label>Email</label>
-        <input type="email" name="email" required>
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br>
 
-        <label>Phone</label>
-        <input type="text" name="phone" required>
+        <label>Phone:</label><br>
+        <input type="text" name="phone" required><br>
 
-        <label>Address</label>
-        <input type="text" name="address">
+        <label>Address:</label><br>
+        <input type="text" name="address" required><br>
 
-        <label>P.O. Box</label>
-        <input type="text" name="pobox">
+        <label>P.O. Box:</label><br>
+        <input type="text" name="pobox"><br>
 
-        <label>Occupation</label>
-        <input type="text" name="occupation">
+        <label>Occupation:</label><br>
+        <input type="text" name="occupation"><br>
 
-        <label>Place of Work</label>
-        <input type="text" name="workplace">
+        <label>Place of Work:</label><br>
+        <input type="text" name="workplace"><br>
 
-        <label>Additional Driver Name</label>
-        <input type="text" name="additional_driver">
+        <label>Additional Driver:</label><br>
+        <input type="text" name="additional_driver"><br>
 
-        <label>Car Type</label>
+        <label>Car Type:</label><br>
         <select name="car_type" required>
-            <option value="S-Presso">Suzuki S-Presso</option>
+            <option value="S-Presso">S-Presso</option>
             <option value="Volvo">Volvo</option>
-        </select>
+        </select><br>
 
-        <label>Start Date</label>
-        <input type="date" name="start_date" required>
+        <label>Start Date:</label><br>
+        <input type="date" name="start_date" required><br>
 
-        <label>End Date</label>
-        <input type="date" name="end_date" required>
+        <label>End Date:</label><br>
+        <input type="date" name="end_date" required><br><br>
 
-        <button type="submit">Book Now</button>
+        <button type="submit">Submit Booking</button>
     </form>
 </body>
 </html>
